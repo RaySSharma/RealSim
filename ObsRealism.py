@@ -109,7 +109,8 @@ def rrcf_radec(field_info, input_dir, cutout_size, field_name, pixsize):
     )
 
     # filter only non-contaminated sources
-    catalog = catalog[(catalog['FLAGS'] == 0) & (catalog['WFC3_F160W_FLUX'] > 0)]
+    try: catalog = catalog[(catalog['FLAGS'] == 0) & (catalog['WFC3_F160W_FLUX'] > 0)]
+    except: catalog = catalog[(catalog['FLAG'] == 0) & (catalog['FLUX_F160W_HST'] > 0)]
 
     segmap_found = False
     # Loop through the catalog until a field is found with a viable segmap.
