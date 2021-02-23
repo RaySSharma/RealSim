@@ -95,7 +95,7 @@ Poisson noise added. The final image is in nanomaggies.
 """
 
 # get field,column,row from database data
-def rrcf_radec(field_info, input_dir, field_name=None, cutout_size=244):
+def rrcf_radec(field_info, input_dir, cutout_size, field_name):
     from astropy.wcs import WCS
     from astropy.nddata import Cutout2D
 
@@ -137,8 +137,8 @@ def rrcf_radec(field_info, input_dir, field_name=None, cutout_size=244):
     return field_name, ra, dec, colc, rowc, im
 
 
-def make_candels_args(field_info, input_dir="./", cutout_size=512):
-    field_name, ra, dec, colc, rowc, im = rrcf_radec(field_info, input_dir, cutout_size)
+def make_candels_args(field_info, input_dir="./", cutout_size=512, field_name=None):
+    field_name, ra, dec, colc, rowc, im = rrcf_radec(field_info, input_dir, cutout_size, field_name)
     candels_args = {
         "candels_field": field_name,  # candels field
         "candels_ra": ra,  # ra for image centroid
