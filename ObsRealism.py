@@ -109,7 +109,6 @@ def rrcf_radec(field_info, input_dir, field_name=None, cutout_size=244):
     im *= field_header["PHOTFNU"] * 1e9
 
     segmap = detect_sources(im)
-
     ## Run photutils
 
     # get info from mask header
@@ -128,8 +127,8 @@ def rrcf_radec(field_info, input_dir, field_name=None, cutout_size=244):
     return field_name, ra, dec, colc, rowc, im
 
 
-def make_candels_args(field_info, INPUT_DIR=""):
-    field_name, ra, dec, colc, rowc, im = rrcf_radec(field_info, INPUT_DIR)
+def make_candels_args(field_info, input_dir="./", cutout_size=512):
+    field_name, ra, dec, colc, rowc, im = rrcf_radec(field_info, input_dir, cutout_size)
     candels_args = {
         "candels_field": field_name,  # candels field
         "candels_ra": ra,  # ra for image centroid
@@ -141,7 +140,7 @@ def make_candels_args(field_info, INPUT_DIR=""):
     return candels_args
 
 
-def detect_sources(image, PIXSIZE=0.13):
+def detect_sources(image, pixsize=0.13):
     import photutils
     from astropy.stats import gaussian_fwhm_to_sigma
     from astropy.convolution import Gaussian2DKernel
@@ -154,7 +153,7 @@ def detect_sources(image, PIXSIZE=0.13):
 
     kernel_kpc_fwhm = 5.0
     kernel_arcsec_fwhm = kernel_kpc_fwhm / typical_kpc_per_arcsec
-    kernel_pixel_fwhm = kernel_arcsec_fwhm / PIXSIZE
+    kernel_pixel_fwhm = kernel_arcsec_fwhm / pixsize
 
     sigma = kernel_pixel_fwhm * gaussian_fwhm_to_sigma
     nsize = int(5 * kernel_pixel_fwhm)
@@ -163,6 +162,7 @@ def detect_sources(image, PIXSIZE=0.13):
     bkg_estimator = photutils.MedianBackground()
     bkg = photutils.Background2D(image, (50, 50), bkg_estimator=bkg_estimator)
     thresh = bkg.background + (5.0 * bkg.background_rms)
+    
     segmap_obj = photutils.detect_sources(
         image, thresh, npixels=10, filter_kernel=kernel
     )
