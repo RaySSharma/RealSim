@@ -67,8 +67,8 @@ def ObsRealism(
 
     hdu_out = fits.ImageHDU(img_data, header=header)
     hdu_out.header["EXTNAME"] = "RealSim"
-    hdu_out.header["CANDELS_RA"] = ra
-    hdu_out.header["CANDELS_DEC"] = dec
+    hdu_out.header["CANDELS_RA"] = float(ra)
+    hdu_out.header["CANDELS_DEC"] = float(dec)
 
     hdu.append(hdu_out)
     hdu.flush()
