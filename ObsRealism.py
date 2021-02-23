@@ -46,6 +46,7 @@ def ObsRealism(
     colc = candels_args["candels_colc"]
     rowc = candels_args["candels_rowc"]
     real_im = candels_args["candels_im"]
+    field = candels_args['candels_field']
 
     # convert to integers
     colc, rowc = int(np.around(colc)), int(np.around(rowc))
@@ -69,6 +70,15 @@ def ObsRealism(
     hdu_out.header["EXTNAME"] = "RealSim"
     hdu_out.header["CANDELS_RA"] = float(ra)
     hdu_out.header["CANDELS_DEC"] = float(dec)
+
+    hdu.append(hdu_out)
+    hdu.flush()
+
+    hdu_out = fits.ImageHDU(real_im, header=header)
+    hdu_out.header["EXTNAME"] = "Real"
+    hdu_out.header["CANDELS_RA"] = float(ra)
+    hdu_out.header["CANDELS_DEC"] = float(dec)
+    hdu_out.header['CANDELS_FIELD'] = field
 
     hdu.append(hdu_out)
     hdu.flush()
