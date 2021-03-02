@@ -46,7 +46,7 @@ def ObsRealism(
     colc = candels_args["candels_colc"]
     rowc = candels_args["candels_rowc"]
     real_im = candels_args["candels_im"]
-    field = candels_args['candels_field']
+    field = candels_args["candels_field"]
 
     # convert to integers
     colc, rowc = int(np.around(colc)), int(np.around(rowc))
@@ -78,7 +78,7 @@ def ObsRealism(
     hdu_out.header["EXTNAME"] = "Real"
     hdu_out.header["CANDELS_RA"] = float(ra)
     hdu_out.header["CANDELS_DEC"] = float(dec)
-    hdu_out.header['CANDELS_FIELD'] = field
+    hdu_out.header["CANDELS_FIELD"] = field
 
     hdu.append(hdu_out)
     hdu.flush()
@@ -95,7 +95,9 @@ Poisson noise added. The final image is in nanomaggies.
 """
 
 # get field,column,row from database data
-def rrcf_radec(field_info, input_dir, cutout_size, field_name, pixsize):
+def rrcf_radec(
+    field_info, input_dir, cutout_size, field_name, pixsize, contamination_thresh=0.2
+):
     from astropy.wcs import WCS
     from astropy.nddata import Cutout2D
 
@@ -109,10 +111,13 @@ def rrcf_radec(field_info, input_dir, cutout_size, field_name, pixsize):
     )
 
     # filter only non-contaminated sources
-    try: catalog = catalog[(catalog['FLAGS'] == 0) & (catalog['WFC3_F160W_FLUX'] > 0)]
-    except: catalog = catalog[(catalog['FLAG'] == 0) & (catalog['FLUX_F160W_HST'] > 0)]
+    try:
+        catalog = catalog[(catalog["FLAGS"] == 0) & (catalog["WFC3_F160W_FLUX"] > 0)]
+    except:
+        catalog = catalog[(catalog["FLAG"] == 0) & (catalog["FLUX_F160W_HST"] > 0)]
 
     segmap_found = False
+
     # Loop through the catalog until a field is found with a viable segmap.
     while not segmap_found:
         # randomly select from basis set
@@ -124,6 +129,13 @@ def rrcf_radec(field_info, input_dir, cutout_size, field_name, pixsize):
 
         # convert to counts nanojanskies, where PHOTFNU is inverse sensitivity in units Jy*sec/electron
         im *= field_header["PHOTFNU"] * 1e9
+
+        # fraction of pixels in cutout without flux values (i.e, fraction of pixels off the detector)
+        contamination_frac = (im == 0).sum() / (im.shape[0] * im.shape[1])
+        if contamination_frac >= contamination_thresh:
+            segmap_found = False
+            continue
+
         try:
             segmap = detect_sources(im, pixsize=pixsize)
             segmap_found = True
@@ -148,8 +160,12 @@ def rrcf_radec(field_info, input_dir, cutout_size, field_name, pixsize):
     return field_name, ra, dec, colc, rowc, im
 
 
-def make_candels_args(field_info, input_dir="./", cutout_size=1024, field_name=None, pixsize=0.06):
-    field_name, ra, dec, colc, rowc, im = rrcf_radec(field_info, input_dir, cutout_size, field_name, pixsize)
+def make_candels_args(
+    field_info, input_dir="./", cutout_size=1024, field_name=None, pixsize=0.06
+):
+    field_name, ra, dec, colc, rowc, im = rrcf_radec(
+        field_info, input_dir, cutout_size, field_name, pixsize
+    )
     candels_args = {
         "candels_field": field_name,  # candels field
         "candels_ra": ra,  # ra for image centroid
@@ -183,7 +199,7 @@ def detect_sources(image, pixsize):
     bkg_estimator = photutils.MedianBackground()
     bkg = photutils.Background2D(image, (50, 50), bkg_estimator=bkg_estimator)
     thresh = bkg.background + (5.0 * bkg.background_rms)
-    
+
     segmap_obj = photutils.detect_sources(
         image, thresh, npixels=10, filter_kernel=kernel
     )
